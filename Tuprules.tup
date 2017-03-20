@@ -1,0 +1,25 @@
+TOP = $(TUP_CWD)
+
+CFLAGS  = -std=c++0x
+CFLAGS += -Wall
+CFLAGS += -Werror
+CFLAGS += -Wno-unknown-pragmas
+CFLAGS += -pedantic-errors
+CFLAGS += -Wextra
+CFLAGS += -Wcast-align
+#CFLAGS += -ggdb
+CFLAGS += -O3
+CFLAGS += -I$(TOP)
+CFLAGS += -isystem/usr/local/Cellar/eigen/3.3.3/include
+CFLAGS += -isystem/usr/local/include
+
+TEST_LFLAGS  = -L/usr/local/lib
+TEST_LFLAGS += -lgtest_main -lgtest
+
+COMPILER = clang++ -Qunused-arguments
+ifdef USE_GCC
+    COMPILER = g++
+endif
+
+!cc = |> $(COMPILER) $(CFLAGS) -c %f -o %o |>
+!testcc = |> $(COMPILER) $(CFLAGS) %f -o %o $(TEST_LFLAGS) |> %B

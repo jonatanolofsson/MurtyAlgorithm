@@ -1,3 +1,4 @@
+#pragma once
 /*
  * MurtyMiller.h
  *
@@ -12,9 +13,6 @@
  * doi: 10.1109/7.599256
  */
 
-#ifndef MILLER_H_
-#define MILLER_H_
-
 #include "AuctionAlgorithm.h"
 #include <queue>
 
@@ -28,6 +26,8 @@ public:
     typedef Eigen::Matrix<size_t, -1, -1> AssignmentMatrix;
     typedef typename Auction<Scalar>::Edge Edge;
     typedef typename Auction<Scalar>::Edges Edges;
+    using APSolvingMode = typename Auction<Scalar>::APSolvingMode;
+    typedef std::vector<Edges> Result;
 
     /**
      * a partition represents an assignment matrix (i.e. edges)
@@ -42,7 +42,7 @@ public:
             w = WeightMatrix::Zero(w.rows(), w.cols());
         }
 
-        Partition(const Edges & edges, const WeightMatrix & w, const Scalar v) :
+        Partition(const Edges& edges, const WeightMatrix& w, const Scalar v) :
             edges(edges), w(w), value(v)
         {}
 
@@ -53,7 +53,7 @@ public:
 
     struct ComparePartition: std::binary_function<Partition,Partition,bool>
     {
-        bool operator()(const Partition & lhs, const Partition & rhs) const
+        bool operator()(const Partition& lhs, const Partition& rhs) const
         {
             return ( lhs.value < rhs.value );
         }
@@ -69,16 +69,16 @@ public:
      * @param edges
      * @return
      */
-    static Scalar objectiveFunctionValue(const Edges & edges )
+    static Scalar objectiveFunctionValue(const Edges& edges )
     {
         Scalar v = 0;
-        for ( const auto & e : edges )
+        for ( const auto& e : edges )
             v += e.v;
 
         return v;
     }
 
-    static typename std::vector<Edges> getMBestAssignments(const WeightMatrix & w,  const size_t mBest = 5 )
+    static typename std::vector<Edges> getMBestAssignments(const WeightMatrix& w,  const size_t mBest = 5 )
     {
         const size_t rows = w.rows(), cols = w.cols();
 
@@ -116,7 +116,7 @@ public:
         Edges edges = Auction<Scalar>::solve(w); // make initial (best) assignment
 
         // sort edges by row
-        std::sort(edges.begin(), edges.end(), [](const Edge & e1, const Edge & e2) {return e1.x < e2.x;});
+        std::sort(edges.begin(), edges.end(), [](const Edge& e1, const Edge& e2) {return e1.x < e2.x;});
 
         // initial partition, i.e. best solution
         Partition init(edges, w, objectiveFunctionValue(edges));
@@ -141,7 +141,7 @@ public:
             // for all triplets in this solution
             for (size_t e = 0; e < currentPartition.edges.size(); ++e)
             {
-                auto & triplet = currentPartition.edges[e];
+                auto& triplet = currentPartition.edges[e];
 
                 WeightMatrix P_ = currentPartition.w; // P' = P
 
@@ -152,7 +152,7 @@ public:
                 Edges S_ = Auction<Scalar>::solve(P_);
 
 #ifdef __ASSOCIATON_FINDER_DEBUG
-                for (const auto & t : currentPartition.edges)
+                for (auto& t : currentPartition.edges)
                 {
                     if ( t.x == triplet.x && t.y == triplet.y )
                         std::cout << "NOT ";
@@ -161,20 +161,20 @@ public:
                 std::cout << "sum = " << objectiveFunctionValue(S_) << std::endl;
 #endif
 
-                if (S_.size() == P_.rows())// solution found? (rows >= cols!)
+                if ((long)S_.size() == P_.rows())// solution found? (rows >= cols!)
                 {
                     // sort edges by row
-                    std::sort(S_.begin(), S_.end(), [](const Edge & e1, const Edge & e2) {return e1.x < e2.x;});
+                    std::sort(S_.begin(), S_.end(), [](const Edge& e1, const Edge& e2) {return e1.x < e2.x;});
 
                     priorityQueue.emplace(Partition(S_, P_, objectiveFunctionValue(S_)));
 
                 }
                 // remove all vertices that include row and column of current node
                 // i.e. force using this edge
-                for (size_t r = 0; r < rows; ++r )
+                for (long r = 0; r < currentPartition.w.rows(); ++r )
                     currentPartition.w(r, triplet.y) = lockingValue;
 
-                for (size_t c = 0; c < cols; ++c )
+                for (long c = 0; c < currentPartition.w.cols(); ++c )
                     currentPartition.w(triplet.x, c) = lockingValue;
 
                 // set edge back to original value
@@ -192,5 +192,10 @@ public:
         }
 };
 
-
-#endif
+template<typename Scalar = double>
+std::ostream& operator<<(std::ostream& os,  const typename MurtyMiller<Scalar>::Result& res) {
+    os << "{\n";
+    for(auto e: res) { os << "\t" << e << "\n"; }
+    os << "}";
+    return os;
+}

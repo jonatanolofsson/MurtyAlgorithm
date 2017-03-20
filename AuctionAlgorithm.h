@@ -1,3 +1,4 @@
+#pragma once
 /*
  * AuctionAlgorithm.h
  *
@@ -5,10 +6,8 @@
  *      Author: fb
  */
 
-#ifndef AUCTIONALGORITHM_H_
-#define AUCTIONALGORITHM_H_
 
-#include "eigen/Eigen/Core"
+#include <eigen3/Eigen/Core>
 #include <vector>
 
 #define __AUCTION_EPSILON_MULTIPLIER 1e-5
@@ -73,7 +72,7 @@ public:
 	 */
 	typedef std::vector<size_t> indices;
 
-	static const Edges solve(const Eigen::Matrix<Scalar, -1, -1> & a)
+	static const Edges solve(const Eigen::Matrix<Scalar, -1, -1>& a)
 	{
 		const size_t rows = a.rows();
 		const size_t cols = a.cols();
@@ -144,9 +143,9 @@ private:
 	 * @param epsilon bidding increment
 	 * @return true if assignment was made, false otherwise
 	 */
-	static bool forward(const Eigen::Matrix<Scalar, -1, -1> & a, Edges & E,
-			Scalars & prices, Scalars & profits, Locks & lockedRows,
-			Locks & lockedCols, Scalar & lambda, Scalar & epsilon)
+	static bool forward(const Eigen::Matrix<Scalar, -1, -1>& a, Edges& E,
+			Scalars& prices, Scalars& profits, Locks& lockedRows,
+			Locks& lockedCols, Scalar& lambda, Scalar& epsilon)
 	{
 #ifdef __AUCTION_DEBUG
 		__A_FORWARD_LOG << "forwarding ..." << std::endl;
@@ -240,7 +239,7 @@ private:
 				bool newEdge = true;
 
 				// if j_i was assigned to different i' to begin, remove (i', j_i) from S
-				for (auto & e : E)
+				for (auto& e : E)
 					if (e.y == j_i) // change edge
 					{
 						lockedRows[e.x] = false; // unlock row i'
@@ -286,9 +285,9 @@ private:
 	 * @param epsilon bidding increment
 	 * @return true if assignment was made, false otherwise
 	 */
-	static bool reverse(const Eigen::Matrix<Scalar, -1, -1> & a, Edges & E,
-			Scalars & prices, Scalars & profits, Locks & lockedRows,
-			Locks & lockedCols, Scalar & lambda, const Scalar & epsilon)
+	static bool reverse(const Eigen::Matrix<Scalar, -1, -1>& a, Edges& E,
+			Scalars& prices, Scalars& profits, Locks& lockedRows,
+			Locks& lockedCols, Scalar& lambda, const Scalar& epsilon)
 	{
 #ifdef __AUCTION_DEBUG
 		__A_REVERSE_LOG << "reversing ..." << std::endl;
@@ -376,7 +375,7 @@ private:
 				bool newEdge = true;
 
 				// if j_i was assigned to different i' to begin, remove (i', j_i) from S
-				for (auto & e : E)
+				for (auto& e : E)
 					if (e.x == i_j) // change edge
 					{
 						lockedCols[e.y] = false; // unlock row i'
@@ -447,8 +446,8 @@ private:
 	 * @param lambda bidding threshold
 	 * @return true if all prices of unassigned objects are below lambda, otherwise false
 	 */
-	static const bool unassignedObjectsLTlambda(const Locks & c,
-			const Scalars & prices, const Scalar lambda)
+	static bool unassignedObjectsLTlambda(const Locks& c,
+			const Scalars& prices, const Scalar lambda)
 	{
 		for (size_t j = 0; j < c.size(); ++j)
 			if (!c[j] && prices[j] > lambda)
@@ -462,7 +461,7 @@ private:
 	 * check if all persons are assigned
 	 * @return true if all persons are assigned, otherwise false
 	 */
-	static const bool allPersonsAssigned(const Locks & r)
+	static bool allPersonsAssigned(const Locks& r)
 	{
 		for (size_t i = 0; i < r.size(); ++i)
 			if (!r[i])
@@ -471,5 +470,15 @@ private:
 	}
 };
 
+template<typename Scalar = double>
+std::ostream& operator<<(std::ostream &os,  const typename Auction<Scalar>::Edge &e) {
+    return os << "<" <<  e.x << ", " << e.y << ", " << e.v << ">";
+}
 
-#endif /* AUCTIONALGORITHM_H_ */
+template<typename Scalar = double>
+std::ostream& operator<<(std::ostream &os,  const typename Auction<Scalar>::Edges &edges) {
+    os << "[";
+    for(auto e: edges) { os << e << ", "; }
+    os << "]";
+    return os;
+}
