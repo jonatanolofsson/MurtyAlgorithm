@@ -63,16 +63,16 @@ public:
      * @param edges
      * @return
      */
-    static Scalar objectiveFunctionValue(const Edges& edges )
+    static Scalar objectiveFunctionValue(const Edges& edges)
     {
         Scalar v = 0;
-        for ( const auto& e : edges )
+        for(const auto& e : edges)
             v += e.v;
 
         return v;
     }
 
-    static typename std::vector<Edges> getMBestAssignments(const WeightMatrix& w,  const size_t mBest = 5 )
+    static typename std::vector<Edges> getKBestAssignments(const WeightMatrix& w,  const size_t kBest = 5)
     {
         const size_t rows = w.rows(), cols = w.cols();
 
@@ -91,20 +91,6 @@ public:
             return resultingEdges;
         }
 
-        size_t kBest = 0;
-
-        const size_t maxComb = ( rows > cols ) ? rows : cols;
-        // if rows! < mBest ...
-        switch (maxComb)
-        {
-        case 1 : kBest = 1; break;
-        case 2 : kBest = 2; break;
-        case 3 : kBest = 6; break;
-        case 4 : kBest = 24; break;
-        default: kBest = mBest; break;
-        }
-        if ( mBest < kBest ) kBest = mBest;
-
         Edges edges = Auction<Scalar>::solve(w); // make initial (best) assignment
 
         // sort edges by row
@@ -116,19 +102,18 @@ public:
         typedef std::priority_queue<Partition, std::vector<Partition>, ComparePartition > PartitionsPriorityQueue;
 
         // create answer-list with initial partition
-        PartitionsPriorityQueue priorityQueue, answerList;
-        priorityQueue.push(init);
+        PartitionsPriorityQueue priorityQueue;
+        std::queue<Partition> answerList;
+        priorityQueue.emplace(init);
 
         // assume values between 0 and 1 !
-        const Scalar lockingValue = 0.;
+        const Scalar lockingValue = __AUCTION_INF;
 
         while ( !priorityQueue.empty() && answerList.size() < kBest )
         {
             // take first element from queue
             Partition currentPartition = priorityQueue.top();
             priorityQueue.pop();
-
-            answerList.push(currentPartition);
 
             // for all triplets in this solution
             for (size_t e = 0; e < currentPartition.edges.size(); ++e)
@@ -142,16 +127,6 @@ public:
 
                 // determine solution for changed matrix and create partition
                 Edges S_ = Auction<Scalar>::solve(P_);
-
-#ifdef __ASSOCIATON_FINDER_DEBUG
-                for (auto& t : currentPartition.edges)
-                {
-                    if ( t.x == triplet.x && t.y == triplet.y )
-                        std::cout << "NOT ";
-                    std::cout << "(" << t.x << ", " << t.y << ") ";
-                }
-                std::cout << "sum = " << objectiveFunctionValue(S_) << std::endl;
-#endif
 
                 if ((long)S_.size() == P_.rows())// solution found? (rows >= cols!)
                 {
@@ -172,11 +147,14 @@ public:
                 // set edge back to original value
                 currentPartition.w(triplet.x, triplet.y) = triplet.v = w(triplet.x, triplet.y);
             }
+
+            answerList.push(currentPartition);
+
         }
             // create return list
             while( !answerList.empty() )
             {
-                resultingEdges.emplace_back(answerList.top().edges);
+                resultingEdges.emplace_back(answerList.front().edges);
                 answerList.pop();
             }
 

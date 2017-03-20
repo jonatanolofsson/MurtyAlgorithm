@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include <typeinfo>
-#include <Miller.h>
+#include <MurtyMiller.h>
 #include <eigen3/Eigen/Core>
 
 class MillerTests : public ::testing::Test {
@@ -28,21 +28,24 @@ class MillerTests : public ::testing::Test {
 
 
 TEST_F(MillerTests, SingleHypothesis) {
-    auto res = MurtyMiller<>::getMBestAssignments(COST);
+    auto res = MurtyMiller<>::getKBestAssignments(COST);
     Eigen::Matrix<int, 5, 10> correct;
     correct <<
         8, 6, 2, 7, 5, 3, 9, 0, 4, 1,
-        8, 6, 2, 7, 5, 3, 9, 0, 4, 1,
-        0, 9, 2, 6, 5, 3, 7, 8, 4, 1,
-        0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
-        9, 2, 8, 7, 5, 3, 6, 0, 4, 1;
+        8, 6, 2, 1, 5, 3, 7, 0, 4, 9,
+        0, 6, 2, 7, 5, 3, 9, 8, 4, 1,
+        0, 6, 2, 1, 5, 3, 7, 8, 4, 9,
+        8, 1, 2, 7, 5, 3, 6, 0, 4, 9;
     int i = 0;
     for(auto edges : res) {
         int j = 0;
+        std::cout << "[";
         for(auto e : edges) {
+            std::cout << e.y << ",";
             ASSERT_EQ(e.y, correct(i, j));
             ++j;
         }
+        std::cout << "]\n";
         ++i;
     }
 }
