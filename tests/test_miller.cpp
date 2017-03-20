@@ -28,13 +28,21 @@ class MillerTests : public ::testing::Test {
 
 
 TEST_F(MillerTests, SingleHypothesis) {
-    COST = 1e6 * Eigen::Matrix<double, 10, 10>::Ones() - COST;
     auto res = MurtyMiller<>::getMBestAssignments(COST);
+    Eigen::Matrix<int, 5, 10> correct;
+    correct <<
+        8, 6, 2, 7, 5, 3, 9, 0, 4, 1,
+        8, 6, 2, 7, 5, 3, 9, 0, 4, 1,
+        0, 9, 2, 6, 5, 3, 7, 8, 4, 1,
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
+        9, 2, 8, 7, 5, 3, 6, 0, 4, 1;
+    int i = 0;
     for(auto edges : res) {
-        std::cerr << "\t[";
+        int j = 0;
         for(auto e : edges) {
-            std::cerr << e.y << ", ";
+            ASSERT_EQ(e.y, correct(i, j));
+            ++j;
         }
-        std::cerr << "]" << std::endl;
+        ++i;
     }
 }

@@ -26,7 +26,6 @@ public:
     typedef Eigen::Matrix<size_t, -1, -1> AssignmentMatrix;
     typedef typename Auction<Scalar>::Edge Edge;
     typedef typename Auction<Scalar>::Edges Edges;
-    using APSolvingMode = typename Auction<Scalar>::APSolvingMode;
     typedef std::vector<Edges> Result;
 
     /**
@@ -37,11 +36,6 @@ public:
     class Partition
     {
     public:
-        Partition() : value(0)
-        {
-            w = WeightMatrix::Zero(w.rows(), w.cols());
-        }
-
         Partition(const Edges& edges, const WeightMatrix& w, const Scalar v) :
             edges(edges), w(w), value(v)
         {}
@@ -110,8 +104,6 @@ public:
         default: kBest = mBest; break;
         }
         if ( mBest < kBest ) kBest = mBest;
-
-        std::cout << "kBest = " << kBest << std::endl;
 
         Edges edges = Auction<Scalar>::solve(w); // make initial (best) assignment
 

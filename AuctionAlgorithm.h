@@ -15,7 +15,16 @@
 //#define __AUCTION_OMIT_ZEROS
 #define __AUCTION_ZERO 0.
 
-template<typename Scalar = double>
+/**
+ * solver modes for association problem
+ */
+enum APSolvingMode
+{
+    MAXIMIZATION = 1, MINIMIZATION = 2
+};
+
+
+template<typename Scalar = double, APSolvingMode MODE = MINIMIZATION>
 class Auction
 {
 private:
@@ -26,14 +35,6 @@ private:
 public:
 
     typedef Eigen::Matrix<Scalar, -1, -1> WeightMatrix;
-
-    /**
-     * solver modes for association problem
-     */
-    enum APSolvingMode
-    {
-        MAXIMIZATION = 1, MINIMIZATION = 2
-    };
 
     /**
      * represents an undirected edge between node x and y with weight v
@@ -72,8 +73,12 @@ public:
 	 */
 	typedef std::vector<size_t> indices;
 
-	static const Edges solve(const Eigen::Matrix<Scalar, -1, -1>& a)
+	static const Edges solve(const WeightMatrix& w)
 	{
+        WeightMatrix a = w;
+        if(MODE == MINIMIZATION) {
+            a = WeightMatrix::Ones(a.rows(), a.cols()) * __AUCTION_INF - a;
+        }
 		const size_t rows = a.rows();
 		const size_t cols = a.cols();
 
